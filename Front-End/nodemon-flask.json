@@ -1,0 +1,5 @@
+{
+  "watch": ["../Back-End"],
+  "ext": "py",
+  "exec": "python ../Back-End/server.py"
+}
