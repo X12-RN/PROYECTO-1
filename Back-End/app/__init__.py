@@ -3,7 +3,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from core.database import db
 from flask_login import LoginManager
 from flask_migrate import Migrate
-from flask_cors import CORS  # Importar Flask-CORS
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 
@@ -16,24 +16,20 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config.from_object('config.Config') 
 
-    # Inicializar SQLAlchemy
+    # Inicializar extensiones
     db.init_app(app)
-
-    # Inicializar Flask-Migrate
     migrate = Migrate(app, db)
+    CORS(app)
 
     # Inicializar LoginManager
     login_manager = LoginManager()
     login_manager.init_app(app)
 
-    # Inicializar Flask-CORS
-    CORS(app)
-
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Registrar Blueprints
+    # Registrar blueprints
     from app.secciones.chat.routes import chat_bp
     app.register_blueprint(chat_bp, url_prefix='/chat')
     

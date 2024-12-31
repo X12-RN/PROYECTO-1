@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 # Blueprint para la aplicación de Criptomonedas
-criptomonedas_bp = Blueprint('criptomonedas', __name__, url_prefix='/criptomonedas')
+criptomonedas_bp = Blueprint('criptomonedas', __name__)
 
 # Importar las rutas para registrarlas en este Blueprint
 from .routes.routes import criptomonedas_bp as crypto_routes
