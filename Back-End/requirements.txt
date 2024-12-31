@@ -9,67 +9,69 @@ blinker==1.9.0
 cachelib==0.9.0
 certifi==2024.12.14
 charset-normalizer==3.4.1
-click==8.1.8
+click>=8.0.0
 distro==1.9.0
 dnspython==2.7.0
 email_validator==2.2.0
 environs==11.2.1
+
+# FastAPI and Extensions
 fastapi==0.115.6
 fastapi-cli==0.0.7
 fastapi_cors==0.0.6
-Flask==2.1.1
+
+# Flask and Extensions
+Flask>=2.2.0
 Flask-Caching==2.3.0
 Flask-Cors==5.0.0
+Flask-Login==0.6.2
 Flask-SocketIO==5.5.0
-frozenlist==1.5.0
-gunicorn==20.1.0
-h11==0.14.0
-httpcore==1.0.7
-httptools==0.6.4
-httpx==0.28.1
-idna==3.10
-itsdangerous==2.2.0
-Jinja2==3.1.5
-jiter==0.8.2
-markdown-it-py==3.0.0
-MarkupSafe==3.0.2
-marshmallow==3.23.2
-mdurl==0.1.2
-multidict==6.1.0
-openai==0.28.0
-orjson==3.10.12
-packaging==24.2
-propcache==0.2.1
-pydantic==2.10.4
-pydantic-extra-types==2.10.1
-pydantic-settings==2.7.0
-pydantic_core==2.27.2
-pygame==2.6.1
-Pygments==2.18.0
-python-dotenv==1.0.1
-python-engineio==4.11.1
-python-multipart==0.0.20
-python-socketio==5.12.0
-PyYAML==6.0.2
-requests==2.32.3
-rich==13.9.4
-rich-toolkit==0.12.0
-shellingham==1.5.4
-simple-websocket==1.1.0
-sniffio==1.3.1
-starlette==0.41.3
-tqdm==4.67.1
-typer==0.15.1
-typing_extensions==4.12.2
-ujson==5.10.0
-urllib3==2.3.0
-uvicorn==0.34.0
-uvloop==0.21.0
-watchfiles==1.0.3
-websockets==14.1
-Werkzeug==3.1.3
-wsproto==1.2.0
-yarl==1.18.3
-SQLAlchemy==2.0.0
 Flask-SQLAlchemy==3.0.0
 Flask-Swagger-UI==4.11.1
+
+# Database
+SQLAlchemy==2.0.0
+python-dotenv==1.0.1
+
+# WebSocket and Real-time
+python-socketio==5.12.0
+python-engineio==4.11.1
+websockets==14.1
+simple-websocket==1.1.0
+
+# HTTP and API
+httpcore==1.0.7
+httpx==0.28.1
+requests==2.32.3
+
+# Utilities
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-core==2.27.2
+pydantic-extra-types==2.10.1
+pydantic-settings==2.7.0
+PyYAML==6.0.2
+Werkzeug>=2.2.0
+Jinja2>=3.0.0
+MarkupSafe>=2.0.0
+itsdangerous>=2.0.0
+
+# Development Tools
+pytest==7.4.0
+rich==13.9.4
+tqdm==4.67.1
+
+# Type Hints
+typing_extensions==4.12.2
+
+# Data Processing
+orjson==3.10.12
+ujson==5.10.0
+
+# Environment Variables
+environs==11.2.1
+
+# Web Servers
+gunicorn==20.1.0
+uvicorn==0.34.0
+watchfiles==1.0.3

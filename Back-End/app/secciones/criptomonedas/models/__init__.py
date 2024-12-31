@@ -1,4 +1,4 @@
-from .crypto_model import Crypto
+from .crypto_model import Crypto, migrate_cryptos
 
-# Exportar los modelos para un acceso centralizado
-__all__ = ['Crypto']
+# Export models and functions for centralized access
+__all__ = ['Crypto', 'migrate_cryptos']

@@ -1,17 +1,21 @@
+import os
 import requests
 from datetime import datetime, timedelta
 from time import sleep
+from dotenv import load_dotenv
+
+# Load environment variables from root .env file
+load_dotenv(dotenv_path="../../.env")
+
+COINMARKETCAP_API_KEY = os.getenv("COINMARKETCAP_API_KEY")
 
 symbol_mapping = {
     "JITO STAKED SOL": "JITOSOL",
     "ETH - RED - ARBITRUM": "ETH",
-    
     "PNG": "PNG",
     "JTO": "JTO",
-    # Agrega más mapeos si es necesario
 }
 
-# Cache para almacenar los datos de precios
 cache = {
     "data": None,
     "timestamp": datetime.now()
@@ -19,41 +23,53 @@ cache = {
 
 def obtener_precios_actuales(monedas):
     global cache
-    # Verificar si los datos en el cache son válidos (por ejemplo, 10 minutos)
     if cache["data"] and datetime.now() - cache["timestamp"] < timedelta(minutes=10):
         return cache["data"]
 
-    # Si el cache no es válido, hacer una nueva solicitud a la API
     try:
         precios = {}
-        api_key = "b355abd4-a64b-48ec-973d-35e4761e56e6"
         url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
-        headers = {"Accepts": "application/json", "X-CMC_PRO_API_KEY": api_key}
+        headers = {
+            "Accepts": "application/json",
+            "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY
+        }
 
         lotes = [monedas[i:i + 10] for i in range(0, len(monedas), 10)]
         for lote in lotes:
-            sleep(2)
-            symbols = ",".join(
-                symbol_mapping.get(moneda["nombre"], moneda["nombre"]) for moneda in lote
-            )
-            params = {"symbol": symbols, "convert": "USD"}
+            sleep(2)  # Rate limiting
+            symbols = [symbol_mapping.get(moneda["nombre"], moneda["nombre"]) for moneda in lote]
+            params = {"symbol": ",".join(symbols)}
+            
             response = requests.get(url, headers=headers, params=params)
-            response.raise_for_status()
+            response.raise_for_status()  # Raise exception for bad status codes
+            
             data = response.json()
-
-            for moneda in monedas:
+            if "data" not in data:
+                print(f"Error en respuesta API: {data}")
+                continue
+                
+            for moneda in lote:
                 symbol = symbol_mapping.get(moneda["nombre"], moneda["nombre"])
                 if symbol in data["data"]:
-                    precios[moneda["nombre"]] = data["data"][symbol]["quote"]["USD"]["price"]
+                    try:
+                        precios[moneda["nombre"]] = data["data"][symbol]["quote"]["USD"]["price"]
+                    except KeyError as e:
+                        print(f"Error procesando {symbol}: {e}")
+                        precios[moneda["nombre"]] = 0
+                else:
+                    print(f"Símbolo no encontrado: {symbol}")
+                    precios[moneda["nombre"]] = 0
 
-        # Actualizar el cache
         cache["data"] = precios
         cache["timestamp"] = datetime.now()
-
         return precios
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error en solicitud HTTP: {e}")
+        return cache["data"] if cache["data"] else {}
     except Exception as e:
-        print(f"Error al obtener precios: {e}")
-        return {}
+        print(f"Error inesperado: {e}")
+        return cache["data"] if cache["data"] else {}
 
 def validar_moneda(data):
     if not data.get("nombre"):

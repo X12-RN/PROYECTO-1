@@ -4,6 +4,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([
     { role: "system", content: "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy?" },
   ]);
+  const [error, setError] = useState(null);
   const inputRef = useRef(null);
 
   const handleSendMessage = async (e) => {
@@ -35,20 +36,13 @@ const Chat = () => {
       });
 
       if (!res.ok) {
-        throw new Error(`Error HTTP: ${res.status}`);
+        throw new Error("Error al procesar tu solicitud.");
       }
 
       const data = await res.json();
-      const assistantMessage = data.choices[0].message;
-
-      // Agregar respuesta del asistente a la conversación
-      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+      setMessages([...newMessages, { role: "assistant", content: data.choices[0].message.content }]);
     } catch (error) {
-      console.error("Error al procesar tu solicitud:", error);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { role: "system", content: "Hubo un error al procesar tu solicitud." },
-      ]);
+      setError(error.message);
     }
   };
 
@@ -99,6 +93,8 @@ const Chat = () => {
           </div>
         ))}
       </div>
+
+      {error && <div className="error">{error}</div>}
 
       {/* Input */}
       <form
