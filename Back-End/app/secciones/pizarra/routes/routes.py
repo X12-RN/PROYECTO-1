@@ -1,50 +1,42 @@
-from flask import Blueprint, request, jsonify
-from app.secciones.pizarra.models.models import Pizarra
+from flask import Blueprint, jsonify, request
+from ..models.models import Pizarra
 from core.database import db
 
-pizarra_bp = Blueprint('pizarra', __name__)
+pizarra_bp = Blueprint('pizarra', __name__, url_prefix='/pizarra')
 
-# Crear una nueva pizarra
-@pizarra_bp.route('/pizarras', methods=['POST'])
-def create_pizarra():
-    data = request.json
-    new_pizarra = Pizarra(titulo=data['titulo'], contenido=data['contenido'])
-    db.session.add(new_pizarra)
-    db.session.commit()
-    return jsonify(new_pizarra.to_dict()), 201
-
-# Obtener todas las pizarras
 @pizarra_bp.route('/pizarras', methods=['GET'])
 def get_pizarras():
     pizarras = Pizarra.query.all()
-    return jsonify([pizarra.to_dict() for pizarra in pizarras]), 200
+    return jsonify([p.to_dict() for p in pizarras])
 
-# Obtener una pizarra por ID
-@pizarra_bp.route('/pizarras/<int:id>', methods=['GET'])
-def get_pizarra(id):
-    pizarra = Pizarra.query.get(id)
-    if not pizarra:
-        return jsonify({"error": "Pizarra no encontrada"}), 404
-    return jsonify(pizarra.to_dict()), 200
+@pizarra_bp.route('/pizarras', methods=['POST'])
+def create_pizarra():
+    data = request.json
+    pizarra = Pizarra(
+        titulo=data.get('titulo', 'Sin título'),
+        contenido=data.get('contenido', '')
+    )
+    db.session.add(pizarra)
+    db.session.commit()
+    return jsonify(pizarra.to_dict()), 201
 
-# Actualizar una pizarra existente
 @pizarra_bp.route('/pizarras/<int:id>', methods=['PUT'])
 def update_pizarra(id):
     data = request.json
-    pizarra = Pizarra.query.get(id)
-    if not pizarra:
-        return jsonify({"error": "Pizarra no encontrada"}), 404
-    pizarra.titulo = data.get('titulo', pizarra.titulo)
-    pizarra.contenido = data.get('contenido', pizarra.contenido)
+    pizarra = Pizarra.query.get_or_404(id)
+    pizarra.titulo = data['titulo']    # <-- Aquí salta el KeyError si falta 'titulo'
+    pizarra.contenido = data['contenido']
     db.session.commit()
-    return jsonify(pizarra.to_dict()), 200
+    return jsonify(pizarra.to_dict())
 
-# Eliminar una pizarra
 @pizarra_bp.route('/pizarras/<int:id>', methods=['DELETE'])
 def delete_pizarra(id):
-    pizarra = Pizarra.query.get(id)
-    if not pizarra:
-        return jsonify({"error": "Pizarra no encontrada"}), 404
+    pizarra = Pizarra.query.get_or_404(id)
     db.session.delete(pizarra)
     db.session.commit()
-    return jsonify({"message": "Deleted successfully"}), 200
+    return '', 204
+
+@pizarra_bp.route('/pizarras/<int:id>', methods=['GET'])
+def get_pizarra(id):
+    pizarra = Pizarra.query.get_or_404(id)
+    return jsonify(pizarra.to_dict())

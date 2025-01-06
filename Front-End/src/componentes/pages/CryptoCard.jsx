@@ -1,51 +1,111 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-const CryptoCard = ({ crypto, getLogoUrl }) => {
-  // Calcular inversión dinámica basada en el precio actual
-  const dynamicInvestment = crypto.precio_actual ? (crypto.precio_actual * crypto.cantidad) : 0;
-
+const CryptoCard = ({
+  nombre,
+  cantidad = 0, // Default value to prevent undefined
+  precio_actual = 0, // Default value to prevent undefined
+  logo,
+  simbolo,
+  style = {}
+}) => {
   return (
-    <div
-      style={{
-        backgroundColor: "#111",
-        borderRadius: "10px",
-        padding: "10px",
-        textAlign: "center",
-        boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+    <div style={{
+      backgroundColor: "#1a1a1a",
+      borderRadius: "10px",
+      padding: "10px",
+      textAlign: "center",
+      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+      color: "#FFD700",
+      width: "100%",
+      maxWidth: "300px",
+      display: "flex",
+      flexDirection: "column",
+      gap: "5px",
+      ...style
+    }}>
+      {/* Nombre de la cripto */}
+      <h3 style={{ 
+        fontSize: "16px",
+        margin: "0",
         color: "#FFD700",
-      }}
-    >
-      <h3 style={{ fontSize: "16px", margin: "5px 0" }}>{crypto.nombre}</h3>
-      <p style={{ fontSize: "12px", color: "#fff", margin: "5px 0" }}>
-        Cantidad: {crypto.cantidad}
-      </p>
+        fontWeight: "bold"
+      }}>
+        {nombre}
+      </h3>
+
+      {/* Cantidad de monedas */}
+      <div style={{ 
+        backgroundColor: "#2a2a2a",
+        padding: "4px",
+        borderRadius: "5px"
+      }}>
+        <p style={{ 
+          fontSize: "12px",
+          color: "#fff", 
+          margin: "0"
+        }}>
+          Cantidad: <span style={{color: "#4CAF50"}}>{Number(cantidad).toFixed(8)}</span>
+        </p>
+      </div>
+
+      {/* Logo */}
       <img
-        src={getLogoUrl(crypto.nombre)}
-        alt={`${crypto.nombre} logo`}
+        src={logo}
+        alt={`Logo de ${nombre}`}
         style={{
-          width: "50px",
-          height: "50px",
-          objectFit: "contain",
-          marginBottom: "10px",
+          width: "40px",
+          height: "40px",
+          margin: "5px auto",
+          display: "block",
+          objectFit: "contain"
         }}
         onError={(e) => {
           e.target.onerror = null;
           e.target.src = "https://via.placeholder.com/50";
         }}
       />
-      {/* Precio Actual */}
-      <p style={{ color: "#0F0", fontSize: "16px", margin: "5px 0", fontWeight: "bold" }}>
-  {crypto.precio_actual && crypto.precio_actual > 0
-    ? `${crypto.precio_actual.toFixed(4)} USD`
-    : "Precio no disponible"}
-</p>
 
-      {/* Inversión Dinámica */}
-      <p style={{ fontSize: "14px", margin: "5px 0", color: "#FFA500", fontWeight: "bold" }}>
-        Inversión: {dynamicInvestment.toFixed(4)} USD
-      </p>
+      {/* Precio actual */}
+      <div style={{
+        backgroundColor: "#2a2a2a",
+        padding: "4px",
+        borderRadius: "5px"
+      }}>
+        <p style={{ 
+          fontSize: "14px",
+          margin: "0",
+          color: "#fff"
+        }}>
+          Precio: <span style={{color: "#00ff00"}}>${Number(precio_actual).toFixed(2)}</span>
+        </p>
+      </div>
+
+      {/* Valor total */}
+      <div style={{
+        backgroundColor: "#2a2a2a",
+        padding: "4px",
+        borderRadius: "5px"
+      }}>
+        <p style={{ 
+          fontSize: "14px",
+          margin: "0",
+          color: "#fff"
+        }}>
+          Total: <span style={{color: "#FFA500"}}>${(Number(precio_actual) * Number(cantidad)).toFixed(2)}</span>
+        </p>
+      </div>
     </div>
   );
+};
+
+CryptoCard.propTypes = {
+  nombre: PropTypes.string.isRequired,
+  cantidad: PropTypes.number,
+  precio_actual: PropTypes.number,
+  logo: PropTypes.string.isRequired,
+  simbolo: PropTypes.string.isRequired,
+  style: PropTypes.object
 };
 
 export default CryptoCard;

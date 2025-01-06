@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Swal from 'sweetalert2';
 
 const FullScreenCanvas = () => {
   const canvasRef = useRef(null);
@@ -17,7 +18,7 @@ const FullScreenCanvas = () => {
     if (mode === "edit" && pizarraId) {
       const fetchPizarra = async () => {
         try {
-          const response = await axios.get(`http://127.0.0.1:5001/pizarra/pizarras/${pizarraId}`);
+          const response = await axios.get(`http://127.0.0.1:5000/pizarra/pizarras/${pizarraId}`);
           setTitulo(response.data.titulo);
           const ctx = canvasRef.current.getContext("2d");
           const image = new Image();
@@ -75,18 +76,46 @@ const FullScreenCanvas = () => {
   };
 
   const handleSave = async () => {
-    const content = canvasRef.current.toDataURL("image/png"); // Convertir canvas a Base64
+    const canvas = canvasRef.current;
+    const imageData = canvas.toDataURL();
+    
     try {
-      if (mode === "create") {
-        await axios.post("http://127.0.0.1:5001/pizarra/pizarras", { titulo, contenido: content });
-      } else if (mode === "edit") {
-        await axios.put(`http://127.0.0.1:5001/pizarra/pizarras/${pizarraId}`, { titulo, contenido: content });
-      }
-      navigate("/pizarra-admin");
+        const response = await fetch(`http://localhost:5000/pizarra/pizarras/${pizarraId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                titulo: titulo || 'Sin título', // Add default title
+                contenido: imageData
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Replace alert with SweetAlert2
+        await Swal.fire({
+            title: 'Éxito!',
+            text: 'Pizarra guardada exitosamente',
+            icon: 'success',
+            confirmButtonText: 'Ok'
+        });
+        
     } catch (error) {
-      console.error("Error saving pizarra:", error);
+        console.error('Error saving:', error);
+        await Swal.fire({
+            title: 'Error!',
+            text: 'Error al guardar la pizarra: ' + error.message,
+            icon: 'error',
+            confirmButtonText: 'Ok'
+        });
     }
-  };
+};
 
   const handleClose = () => {
     navigate("/pizarra-admin");

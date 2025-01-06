@@ -1,138 +1,65 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from 'react';
+import { sendQuery, socket } from '../../services/api.js'; // Importar socket desde api.js
 
 const Chat = () => {
-  const [messages, setMessages] = useState([
-    { role: "system", content: "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy?" },
-  ]);
-  const [error, setError] = useState(null);
-  const inputRef = useRef(null);
+  const [model, setModel] = useState('gpt-3.5-turbo');
+  const [internetAccess, setInternetAccess] = useState(false);
+  const [query, setQuery] = useState('');
+  const [responses, setResponses] = useState([]);
+  const [stats, setStats] = useState({ queries: 0, tokens: 0 });
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    const userInput = inputRef.current.value.trim();
+  useEffect(() => {
+    socket.on('response', (data) => {
+      setResponses((prev) => [...prev, data]);
+      setStats((prev) => ({
+        queries: prev.queries + 1,
+        tokens: prev.tokens + data.tokens,
+      }));
+    });
+  }, []);
 
-    if (!userInput) return;
-
-    // Agregar mensaje del usuario a la conversación
-    const newMessages = [...messages, { role: "user", content: userInput }];
-    setMessages(newMessages);
-    inputRef.current.value = "";
-
-    try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      if (!apiKey) throw new Error("Falta la clave API de OpenAI.");
-
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: newMessages,
-          max_tokens: 150,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Error al procesar tu solicitud.");
-      }
-
-      const data = await res.json();
-      setMessages([...newMessages, { role: "assistant", content: data.choices[0].message.content }]);
-    } catch (error) {
-      setError(error.message);
-    }
+  const handleSendQuery = async () => {
+    const response = await sendQuery(query, model, internetAccess);
+    socket.emit('query', response);
+    setQuery('');
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        height: "100vh",
-        padding: "10px",
-        backgroundColor: "#111",
-        color: "#FFF",
-      }}
-    >
-      {/* Mensajes */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "10px",
-          backgroundColor: "#222",
-          borderRadius: "10px",
-          border: "1px solid #333",
-          marginBottom: "10px",
-        }}
-      >
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            style={{
-              marginBottom: "10px",
-              textAlign: msg.role === "user" ? "right" : "left",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-block",
-                padding: "10px",
-                borderRadius: "10px",
-                backgroundColor: msg.role === "user" ? "#00BFFF" : "#444",
-                color: msg.role === "user" ? "#FFF" : "#DDD",
-                maxWidth: "80%",
-              }}
-            >
-              {msg.content}
-            </div>
-          </div>
-        ))}
+    <div className="p-4">
+      <div className="mb-4">
+        <select value={model} onChange={(e) => setModel(e.target.value)} className="p-2 border">
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+          <option value="gpt-4">GPT-4</option>
+        </select>
+        <label className="ml-4">
+          <input type="checkbox" checked={internetAccess} onChange={() => setInternetAccess(!internetAccess)} />
+          Internet Access
+        </label>
       </div>
-
-      {error && <div className="error">{error}</div>}
-
-      {/* Input */}
-      <form
-        onSubmit={handleSendMessage}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-        }}
-      >
-        <textarea
-          ref={inputRef}
-          placeholder="Escribe tu mensaje aquí..."
-          style={{
-            flex: 1,
-            padding: "10px",
-            borderRadius: "10px",
-            border: "1px solid #333",
-            backgroundColor: "#222",
-            color: "#FFF",
-            minHeight: "50px",
-            resize: "none",
-          }}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="p-2 border w-full"
         />
-        <button
-          type="submit"
-          style={{
-            backgroundColor: "#00BFFF",
-            color: "#FFF",
-            padding: "10px 20px",
-            borderRadius: "10px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Enviar
+        <button onClick={handleSendQuery} className="p-2 bg-blue-500 text-white">
+          Send
         </button>
-      </form>
+      </div>
+      <div className="mb-4">
+        <h2>Responses</h2>
+        <ul>
+          {responses.map((res, index) => (
+            <li key={index}>{res.message}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h2>Statistics</h2>
+        <p>Queries: {stats.queries}</p>
+        <p>Tokens: {stats.tokens}</p>
+      </div>
     </div>
   );
 };

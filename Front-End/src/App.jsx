@@ -8,6 +8,7 @@ import Chat from "./componentes/pages/Chat";
 import NavBar from "./componentes/NavBar";
 import PizarraAdmin from "./componentes/pages/PizarraAdmin";
 import Header from "./componentes/Header"; // Importa el nuevo Header
+import AdminCryptos from "./componentes/pages/AdminCryptos";
 
 const App = () => {
   const [currentDate, setCurrentDate] = useState("");
@@ -97,6 +98,7 @@ const App = () => {
           <Route path="/fullscreen-canvas" element={<FullScreenCanvas />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/pizarra-admin" element={<PizarraAdmin />} />
+          <Route path="/admin-cryptos" element={<AdminCryptos />} />
         </Routes>
       </main>
 

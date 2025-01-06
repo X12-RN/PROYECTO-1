@@ -4,8 +4,6 @@ from logging.config import fileConfig
 from flask import current_app
 
 from alembic import context
-from core.database import db
-from app.secciones.pizarra.models.models import Pizarra
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -40,9 +38,6 @@ def get_engine_url():
 # target_metadata = mymodel.Base.metadata
 config.set_main_option('sqlalchemy.url', get_engine_url())
 target_db = current_app.extensions['migrate'].db
-
-# MetaDatos para Alembic
-target_metadata = db.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -104,7 +99,7 @@ def run_migrations_online():
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata,
+            target_metadata=get_metadata(),
             **conf_args
         )
 

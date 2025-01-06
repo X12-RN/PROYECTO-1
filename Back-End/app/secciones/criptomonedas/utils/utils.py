@@ -3,6 +3,9 @@ import requests
 from datetime import datetime, timedelta
 from time import sleep
 from dotenv import load_dotenv
+from apscheduler.schedulers.background import BackgroundScheduler
+from core.database import db
+from app.secciones.criptomonedas.models.crypto_model import Crypto
 
 # Load environment variables from root .env file
 load_dotenv(dotenv_path="../../.env")
@@ -10,11 +13,48 @@ load_dotenv(dotenv_path="../../.env")
 COINMARKETCAP_API_KEY = os.getenv("COINMARKETCAP_API_KEY")
 
 symbol_mapping = {
-    "JITO STAKED SOL": "JITOSOL",
-    "ETH - RED - ARBITRUM": "ETH",
-    "PNG": "PNG",
-    "JTO": "JTO",
+    "BTC": "bitcoin",
+    "ETH": "ethereum",
+    "XRP": "ripple",
+    "AVAX": "avalanche",
+    "MATIC": "polygon",
+    "DOT": "polkadot",
+    "LINK": "chainlink",
+    "LTC": "litecoin",
+    "ATOM": "cosmos",
+    "ALGO": "algorand",
+    "SAND": "the-sandbox",
+    "NEAR": "near-protocol",
+    "ADA": "cardano",
+    "AXS": "axie-infinity",
+    "BCH": "bitcoin-cash",
+    "CHZ": "chiliz",
+    "XLM": "stellar",
+    "LDO": "lido-dao",
+    "DYDX": "dydx",
+    "BAL": "balancer",
+    "MKR": "maker",
+    "LRC": "loopring",
+    "SNX": "synthetix",
+    "TRX": "tron",
+    "BAT": "basic-attention-token",
+    "ARB": "arbitrum",
+    "GRT": "the-graph",
+    "OMG": "omg",
+    "UNI": "uniswap",
+    "SUSHI": "sushiswap",
+    "ENJ": "enjin-coin",
+    "DOGE": "dogecoin",
+    "SHIB": "shiba-inu",
+    "SOL": "solana",
+    "RAY": "raydium",
+    "FIDA": "bonfida",
+    "JITOSOL": "jito-staked-sol",
+    "PNG": "pangolin",
+    "RDNT": "radiant"
 }
+
+CACHE_DURATION = 120  # 2 minutes in seconds
 
 cache = {
     "data": None,
@@ -22,70 +62,100 @@ cache = {
 }
 
 def obtener_precios_actuales(monedas):
-    global cache
-    if cache["data"] and datetime.now() - cache["timestamp"] < timedelta(minutes=10):
+    now = datetime.now()
+    
+    # Return cached data if valid
+    if cache["data"] and (now - cache["timestamp"]).seconds < CACHE_DURATION:
         return cache["data"]
-
+    
     try:
         precios = {}
-        url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+        url = "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest"
         headers = {
             "Accepts": "application/json",
             "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY
         }
 
-        lotes = [monedas[i:i + 10] for i in range(0, len(monedas), 10)]
-        for lote in lotes:
-            sleep(2)  # Rate limiting
-            symbols = [symbol_mapping.get(moneda["nombre"], moneda["nombre"]) for moneda in lote]
-            params = {"symbol": ",".join(symbols)}
-            
-            response = requests.get(url, headers=headers, params=params)
-            response.raise_for_status()  # Raise exception for bad status codes
-            
-            data = response.json()
-            if "data" not in data:
-                print(f"Error en respuesta API: {data}")
-                continue
-                
-            for moneda in lote:
-                symbol = symbol_mapping.get(moneda["nombre"], moneda["nombre"])
-                if symbol in data["data"]:
-                    try:
-                        precios[moneda["nombre"]] = data["data"][symbol]["quote"]["USD"]["price"]
-                    except KeyError as e:
-                        print(f"Error procesando {symbol}: {e}")
-                        precios[moneda["nombre"]] = 0
-                else:
-                    print(f"Símbolo no encontrado: {symbol}")
-                    precios[moneda["nombre"]] = 0
+        # Remove duplicates
+        unique_symbols = list({moneda["nombre"].upper() for moneda in monedas})
+        symbols = ",".join(unique_symbols)
 
+        params = {
+            "symbol": symbols,
+            "convert": "USD"
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+
+        if "data" in data:
+            for symbol, info in data["data"].items():
+                if isinstance(info, list):
+                    info = info[0]
+                # Use CMC ID to construct logo URL
+                cmc_id = info.get("id", "")
+                logo_url = f"https://s2.coinmarketcap.com/static/img/coins/64x64/{cmc_id}.png"
+                precios[symbol] = {
+                    "USD": info["quote"]["USD"]["price"],
+                    "logo": logo_url
+                }
+        
+        # Cache the results
         cache["data"] = precios
-        cache["timestamp"] = datetime.now()
+        cache["timestamp"] = now
+        
         return precios
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error en solicitud HTTP: {e}")
-        return cache["data"] if cache["data"] else {}
     except Exception as e:
-        print(f"Error inesperado: {e}")
-        return cache["data"] if cache["data"] else {}
+        print(f"Error al obtener precios: {e}")
+        return None
+
+def actualizar_precios_db(symbols):
+    try:
+        precios = obtener_precios_actuales(symbols)
+        if precios:
+            for symbol in symbols:
+                symbol_upper = symbol["nombre"].upper()
+                if symbol_upper in precios:
+                    crypto = Crypto.query.filter_by(simbolo=symbol_upper).first()
+                    if crypto:
+                        crypto.precio_actual = precios[symbol_upper]['USD']
+                        crypto.logo = precios[symbol_upper]['logo']  # Actualizar URL del logo
+                        db.session.add(crypto)
+            db.session.commit()
+            return True
+    except Exception as e:
+        print(f"Error al actualizar precios en la base de datos: {e}")
+        return False
 
 def validar_moneda(data):
-    if not data.get("nombre"):
-        return "El nombre de la moneda es obligatorio."
-    if "cantidad" in data and (not isinstance(data["cantidad"], (int, float)) or data["cantidad"] < 0):
-        return "La cantidad debe ser un número positivo."
-    if "inversion" in data and (not isinstance(data["inversion"], (int, float)) or data["inversion"] < 0):
-        return "La inversión debe ser un número positivo."
-    if not data.get("divisa") or data["divisa"].upper() not in ["MXN", "USD"]:
-        return "La divisa debe ser MXN o USD."
-    return None
+    required_fields = ["nombre", "cantidad", "divisa", "tipo"]
+    for field in required_fields:
+        if field not in data:
+            return False
+    return True
 
 def sincronizar_monedas():
-    from app.secciones.criptomonedas.models import monedas
-    precios = obtener_precios_actuales(monedas)
-    if precios:
-        monedas[:] = [moneda for moneda in monedas if moneda["nombre"] in precios]
-    else:
-        print("No se encontraron precios válidos en la sincronización. Monedas no modificadas.")
+    from app.secciones.criptomonedas.models.crypto_model import Crypto, monedas
+    try:
+        if Crypto.query.first() is None:
+            for moneda in monedas:
+                nombre = moneda['nombre'].upper()
+                simbolo = nombre.split(' - ')[0]  # Get first part before any dash
+                
+                crypto = Crypto(
+                    nombre=nombre,
+                    cantidad=moneda['cantidad'],
+                    simbolo=simbolo,
+                    precio_actual=None,  # Will be updated by CoinMarketCap API
+                    tipo=moneda.get('tipo', 'alt'),
+                    logo=None  # Will be generated from symbol in routes.py
+                )
+                db.session.add(crypto)
+            db.session.commit()
+            print("Migration successful")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Migration error: {e}")
+
+# Inicializar scheduler
+scheduler = BackgroundScheduler()
