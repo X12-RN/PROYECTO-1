@@ -2,7 +2,11 @@
   "name": "frontend",
   "private": true,
   "version": "1.0.0",
+  "description": "Your app description",
+  "author": "Adrian <riandod@hotmail.com>",
+  "homepage": "https://github.com/X12-RN/PROYECTO-1.git",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,37 +14,59 @@
     "preview": "vite preview",
     "backend-flask": "nodemon --config nodemon-flask.json",
     "backend-uvicorn": "nodemon --config nodemon-uvicorn.json",
-    "start": "npm-run-all --parallel dev backend-flask backend-uvicorn"
+    "start": "vite",
+    "electron:dev": "npm-run-all -p dev electron:start",
+    "electron:start": "wait-on tcp:5173 && electron .",
+    "electron:build": "vite build && electron-builder"
+  },
+  "build": {
+    "appId": "com.kiosko.app",
+    "productName": "Kiosko App",
+    "directories": {
+      "output": "dist_electron",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Utility",
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "sign": false
+    }
   },
   "dependencies": {
     "axios": "^1.7.9",
     "chart.js": "^4.4.7",
+    "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "react-router-dom": "^7.1.1",
-    "react-slick": "^0.30.3",
-    "slick-carousel": "^1.8.1",
     "socket.io-client": "^4.8.1",
-    "sweetalert2": "^11.15.9"
+    "sweetalert2": "^11.15.10"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.17.0",
-    "eslint-plugin-react": "^7.37.2",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.16",
-    "globals": "^15.14.0",
-    "nodemon": "^3.1.9",
+    "electron": "^28.3.3",
+    "electron-builder": "^25.1.8",
+    "eslint": "^8.0.0",
+    "nodemon": "^2.0.0",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.0.5"
+    "vite": "^4.5.5",
+    "wait-on": "^6.0.0"
   },
   "proxy": "http://127.0.0.1:5000"
 }
