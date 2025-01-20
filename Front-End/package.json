@@ -19,7 +19,8 @@
     "electron:start": "wait-on tcp:5173 && electron .",
     "electron:build": "vite build && electron-builder",
     "dev:servers": "npm-run-all -p backend-flask backend-uvicorn",
-    "dev:all": "npm-run-all -p dev dev:servers electron:start"
+    "dev:all": "npm-run-all -p dev dev:servers electron:start",
+    "build:linux": "electron-builder --linux --arm64"
   },
   "build": {
     "appId": "com.kiosko.app",
@@ -35,7 +36,7 @@
     "linux": {
       "target": [
         {
-          "target": "deb",
+          "target": "tar.gz",
           "arch": [
             "arm64"
           ]
