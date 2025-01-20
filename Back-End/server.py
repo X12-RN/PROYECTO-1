@@ -1,3 +1,6 @@
+import os
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask
 from flask_migrate import Migrate
 from flask_socketio import SocketIO 
@@ -43,7 +46,7 @@ def create_server():
          resources={r"/*": {
              "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization"],
+             "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
              "expose_headers": ["Content-Type", "Authorization"],
              "supports_credentials": True
          }}
@@ -56,7 +59,7 @@ def create_server():
     socketio = SocketIO(
         app,
         cors_allowed_origins=["http://localhost:5173"],
-        async_mode='gevent',
+        async_mode='eventlet',  # Usar eventlet para compatibilidad con Gunicorn
         logger=True,
         engineio_logger=True,
         ping_timeout=60,
@@ -64,14 +67,38 @@ def create_server():
         always_connect=True
     )
     
+    # Aquí puedes registrar tus rutas, blueprints y manejadores de SocketIO
+    # Por ejemplo:
+    @app.route('/')
+    def index():
+        return "¡Hola desde Flask y SocketIO en Render!"
+    
+    @socketio.on('mensaje')
+    def handle_message(data):
+        print(f"Mensaje recibido: {data}")
+        socketio.emit('respuesta', {'data': 'Mensaje recibido'})
+    
     return app, socketio
 
 # Create and configure application instance
 app, socketio = create_server()
 
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+        "supports_credentials": True
+    }
+})
+
 # Export the Flask app instance for ASGI servers
 application = WsgiToAsgi(app)
 
 if __name__ == '__main__':
+    # Obtener el puerto desde las variables de entorno o usar el 5000 por defecto
+    port = int(os.environ.get('PORT', 5000))
+    host = '0.0.0.0'  # Escuchar en todas las interfaces
+    
     # Run with SocketIO instead of Flask's run method
-    socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host=host, port=port, debug=False)

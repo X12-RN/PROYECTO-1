@@ -70,7 +70,7 @@ const AllCryptos = () => {
 
   useEffect(() => {
     fetchCryptos();
-    const interval = setInterval(fetchCryptos, 120000);
+    const interval = setInterval(fetchCryptos, 300000);
     return () => clearInterval(interval);
   }, []);
 

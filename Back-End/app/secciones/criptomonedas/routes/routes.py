@@ -32,54 +32,65 @@ def obtener_precios():
 @criptomonedas_bp.route("/monedas", methods=["POST"])
 def agregar_moneda():
     try:
-        data = request.get_json()
+        data = request.json
         nombre = data.get('nombre')
         simbolo = data.get('simbolo')
+        cantidad = data.get('cantidad', 0.0)
 
+        # Validar datos
         if not nombre or not simbolo:
-            return jsonify({"error": "Nombre y símbolo son requeridos."}), 400
+            return jsonify({"error": "Nombre y símbolo son requeridos"}), 400
 
-        # Validar si la moneda ya existe
-        existente = Crypto.query.filter_by(simbolo=simbolo.upper()).first()
-        if existente:
-            return jsonify({"error": "La moneda ya existe."}), 400
+        # Verificar que el símbolo exista en symbol_mapping
+        if simbolo.upper() not in symbol_mapping:
+            return jsonify({"error": f"Símbolo {simbolo} no soportado"}), 400
+
+        # Obtener el coin_id para CoinMarketCap
+        coin_id = symbol_mapping[simbolo.upper()]
 
         nueva_moneda = Crypto(
             nombre=nombre,
             simbolo=simbolo.upper(),
-            precio_actual=0.0  # Valor por defecto
+            cantidad=float(cantidad),
+            precio_actual=0.0,  # Se actualizará después
+            tipo='alt',  # Valor por defecto
+            logo=None   # Se actualizará después
         )
 
         db.session.add(nueva_moneda)
         db.session.commit()
 
+        # Actualizar precio y logo inmediatamente
+        cryptos = [{"nombre": simbolo.upper()}]
+        actualizar_precios_db(cryptos)
+        
         return jsonify(nueva_moneda.to_dict()), 201
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error al agregar moneda: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
+        return jsonify({"error": str(e)}), 500  
+    
+    
 @criptomonedas_bp.route("/monedas/<int:id>", methods=["PUT"])
 def actualizar_moneda(id):
     try:
         crypto = Crypto.query.get_or_404(id)
         data = request.json
         
-        error = validar_moneda(data)
-        if error:
-            return jsonify({"error": error}), 400
-        
-        crypto.nombre = data["nombre"]
-        crypto.cantidad = float(data["cantidad"])
-        crypto.divisa = data["divisa"].upper()
-        if "tipo" in data:
-            crypto.tipo = data["tipo"]
+        # Solo actualizamos la cantidad, no necesitamos validar otros campos
+        if "cantidad" in data:
+            crypto.cantidad = float(data["cantidad"])
+            db.session.commit()
+            return jsonify({
+                "mensaje": "Cantidad actualizada exitosamente", 
+                "moneda": crypto.to_dict()
+            })
+        else:
+            return jsonify({"error": "No se proporcionó la cantidad"}), 400
             
-        db.session.commit()
-        return jsonify({"mensaje": "Moneda actualizada exitosamente", "moneda": crypto.to_dict()})
     except Exception as e:
         db.session.rollback()
+        print(f"Error al actualizar moneda: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @criptomonedas_bp.route("/monedas/<int:id>", methods=["DELETE"])

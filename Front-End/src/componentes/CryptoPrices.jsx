@@ -36,7 +36,7 @@ const CryptoPrices = () => {
     };
 
     fetchCryptoPrices();
-    const interval = setInterval(fetchCryptoPrices, 120000);
+    const interval = setInterval(fetchCryptoPrices, 300000);
     return () => clearInterval(interval);
   }, []);
 

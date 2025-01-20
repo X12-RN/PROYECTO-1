@@ -102,7 +102,11 @@ const AdminCryptos = () => {
         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
           <input id="swal-crypto-name" 
                  class="swal2-input" 
-                 placeholder="Nombre de la Cripto" 
+                 placeholder="Nombre Completo (ej: Yearn Finance)" 
+                 style="width: 90%; text-align: center; font-size: 14px;" />
+          <input id="swal-crypto-symbol" 
+                 class="swal2-input" 
+                 placeholder="Símbolo (ej: YFI)" 
                  style="width: 90%; text-align: center; font-size: 14px;" />
           <input id="swal-crypto-quantity" 
                  class="swal2-input" 
@@ -117,25 +121,38 @@ const AdminCryptos = () => {
       cancelButtonText: "Cancelar",
       preConfirm: () => {
         const nombre = document.getElementById("swal-crypto-name").value;
+        const simbolo = document.getElementById("swal-crypto-symbol").value;
         const cantidad = document.getElementById("swal-crypto-quantity").value;
-        if (!nombre || !cantidad) {
+        
+        if (!nombre || !simbolo || !cantidad) {
           Swal.showValidationMessage("Por favor complete todos los campos");
+          return false;
         }
-        return { nombre: nombre.toUpperCase(), cantidad: parseFloat(cantidad) };
+        return { 
+          nombre: nombre.trim().toUpperCase(), 
+          simbolo: simbolo.trim().toUpperCase(),
+          cantidad: parseFloat(cantidad)
+        };
       }
     });
 
     if (formValues) {
       try {
-        await axios.post("http://127.0.0.1:5000/criptomonedas/monedas", formValues);
-        await fetchCryptos();
-        Swal.fire("¡Éxito!", "Criptomoneda agregada correctamente", "success");
+        const response = await axios.post(
+          "http://127.0.0.1:5000/criptomonedas/monedas", 
+          formValues
+        );
+        
+        if (response.status === 201) {
+          await fetchCryptos();
+          Swal.fire("¡Éxito!", "Criptomoneda agregada correctamente", "success");
+        }
       } catch (error) {
         console.error("Error adding crypto:", error);
-        Swal.fire("Error", "No se pudo agregar la criptomoneda", "error");
+        Swal.fire("Error", `No se pudo agregar la criptomoneda. ${error.response?.data?.error || ''}`, "error");
       }
     }
-  };
+};
 
   const handleDelete = async (id, nombre) => {
     const result = await Swal.fire({

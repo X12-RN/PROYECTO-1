@@ -35,6 +35,17 @@ monedas = [
     {"nombre": "DOGE", "cantidad": 27.68778483, "divisa": "MXN", "tipo": "meme"},  # Meme coin
     {"nombre": "SHIB", "cantidad": 398732.8265, "divisa": "MXN", "tipo": "meme"},  # Meme coin
 
+    # New crypto entries
+    {"nombre": "FTM", "cantidad": 28.84811832, "divisa": "MXN", "tipo": "alt"},  # Fantom
+    {"nombre": "YFI", "cantidad": 0.00272968, "divisa": "MXN", "tipo": "defi"},  # Yearn Finance
+    {"nombre": "PEPE", "cantidad": 568607.74543704, "divisa": "MXN", "tipo": "meme"},  # Pepe
+    {"nombre": "APE", "cantidad": 8.93330139, "divisa": "MXN", "tipo": "nft"},  # ApeCoin
+    {"nombre": "MANA", "cantidad": 44.17014995, "divisa": "MXN", "tipo": "metaverse"},  # Decentraland
+    {"nombre": "QNT", "cantidad": 0.20253173, "divisa": "MXN", "tipo": "alt"},  # Quant
+    {"nombre": "FET", "cantidad": 34.9, "divisa": "MXN", "tipo": "alt"},  # Fetch.ai
+    {"nombre": "JUP", "cantidad": 46.92102, "divisa": "MXN", "tipo": "alt"},
+
+
     # USD - Otros exchanges
     {"nombre": "JTO", "cantidad": 16.978581, "divisa": "USD", "tipo": "alt"},  # Altcoin
     {"nombre": "RAY", "cantidad": 12.42801, "divisa": "USD", "tipo": "alt"},  # Altcoin

@@ -9,6 +9,7 @@ import NavBar from "./componentes/NavBar";
 import PizarraAdmin from "./componentes/pages/PizarraAdmin";
 import Header from "./componentes/Header"; // Importa el nuevo Header
 import AdminCryptos from "./componentes/pages/AdminCryptos";
+const { ipcRenderer } = window.require('electron');
 
 const App = () => {
   const [currentDate, setCurrentDate] = useState("");
@@ -52,6 +53,7 @@ const App = () => {
         marginBottom: "30px",
       }}
     >
+
       {location.pathname !== "/fullscreen-canvas" &&
         location.pathname !== "/pizarra-admin" &&
         location.pathname !== "/all-cryptos" &&

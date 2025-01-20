@@ -1,8 +1,13 @@
-const { app, BrowserWindow, session } = require('electron');
+const { app, BrowserWindow, session, ipcMain } = require('electron');
 const path = require('path');
 
 // Deshabilitar aceleración hardware
 app.disableHardwareAcceleration();
+
+// Añadir el manejador para cerrar la aplicación
+ipcMain.on('quit-app', () => {
+  app.quit();
+});
 
 function createWindow() {
   const win = new BrowserWindow({
