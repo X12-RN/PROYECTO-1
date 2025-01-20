@@ -3,3 +3,7 @@ Back-End/.env
 Back-End/.env
 Front-End/dist_electron/
 Front-End/node_modules/
+Front-End/dist_electron/
+Front-End/node_modules/
+*.exe
+*.asar
